@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>&lt;&gt; Parity Debugger</title>
+    <style>
+        body {
+            font-family: monospace;
+            background-color: #3c3f41;
+            color: #dedede;
+            margin: 2px;
+            width: 98vw;
+            overflow: hidden;
+            text-align: center;
+        }
+        details .tree-content {
+            padding-left: 30px;
+        }
+        .tree-value {
+            font-style: italic;
+            color: #808080;
+        }
+        .tree_node summary {
+            outline: none;
+            cursor: pointer;
+        }
+        .tree_node summary::marker {
+            cursor: pointer!important;
+        }
+        #tree {
+            text-align: left;
+            color: #dedede;
+            overflow: auto;
+            width: 100%;
+            height: 50vh;
+        }
+        #code, #vars {
+            text-align: left;
+            overflow: auto;
+            background: transparent;
+            width: 50vw;
+            color: #dedede;
+            resize: none;
+            height: 20vh;
+            cursor: text;
+            outline: 1px solid #808080;
+            float: left;
+        }
+        #vars td {
+            border-top: 1px solid grey;
+        }
+        td:nth-child(2) {
+            width: 100%;
+        }
+        #vars {
+            float: right;
+            width: 45vw;
+        }
+        a:any-link {
+            color: #dedede;
+        }
+        #title {
+            font-size: 2em;
+            text-decoration: underline;
+            font-weight: bold;
+            font-variant: all-small-caps;
+        }
+        select {
+            background: transparent;
+            color: #dedede;
+        }
+        option, input {
+            background-color: #3c3f41;
+            color: #dedede;
+        }
+        input {
+            width: 40px;
+            border: 0.5px solid #dedede;
+        }
+        i {
+            display: inline-block;
+            font-style: normal;
+            text-decoration: none;
+            background: red;
+        }
+        .token:hover {
+            text-decoration: underline red;
+        }
+        .token.current {
+            color: blue;
+            font-weight: bolder;
+        }
+    </style>
+</head>
+    <span id="title">&lt;&gt; Parity Debugger</span><br>
+<!--    <a href="#" onclick="collapseAll()">Collapse All Tokens</a> &middot;-->
+    <a href="#" onclick="expandAll()">Expand All Tokens</a>
+    <div id="tree"></div>
+    <hr>
+    <a href="#" id="statecontrol">Play</a> &middot;
+    <a href="#" onclick="eel.nnext()">Next</a> &middot;
+    <a href="#" onclick="eel.enter()">Enter</a> &middot;
+    <a href="#" onclick="eel.leave()">Leave</a><br>
+<!--    Debugger depth: -1<span id="level"></span><br>-->
+    Minimum function time: <input type="number" id="delay" value="0.1" step="0.1" min="0.01" onchange="set_delay()">
+    <br>
+    <pre readonly tabindex="0" id="code"></pre>
+    <pre readonly tabindex="0" id="vars"><em>variables will appear here</em></pre>
+    <div style="clear: both;">
+    Code Style:
+    <select>
+        <option value="normal">Original</option>
+        <option value="pretty">Pretty</option>
+<!--        <option value="ugly">Ugly</option>-->
+    </select><br>&copy; 2021 Cole Wilson</div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+            integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+            crossorigin="anonymous">
+    </script>
+    <script src="/eel.js"></script>
+    <script>
+        mode = false;
+        states = {}
+        breakpoints = []
+        code = {}
+        $(document).ready(function(){
+            eel.doc_ready()
+        });
+        function set_delay() {
+            eel.set_delay($('#delay').val());
+        }
+        $("#statecontrol").click(function() {
+            mode = !mode;
+            if (mode) {
+                eel.play()
+                $(this).html('Pause')
+            }
+            else {
+                eel.pause()
+                $(this).html('Play')
+            }
+
+        });
+        function pause() {
+            $("#statecontrol").html('Play');
+            mode = false;
+        }
+        function setlevel(i) {
+            $("#level").text(i);
+        }
+        function set_vars(i) {
+            $("#vars").html(i);
+        }
+        eel.expose(set_vars);
+        eel.expose(pause);
+        eel.expose(setlevel);
+        Array.prototype.remove = function() {
+            var what, a = arguments, L = a.length, ax;
+            while (L && this.length) {
+                what = a[--L];
+                while ((ax = this.indexOf(what)) !== -1) {
+                    this.splice(ax, 1);
+                }
+            }
+            return this;
+        };
+        function highlight(element, start, end, background='red') {
+            let str = $(element).text();
+            str = str.substr(0, start).replaceAll(/<\/?i>/g,'') +
+                '<i style="background: '+background+'">' + str.substr(start, end - start + 1) + '</i>' +
+                str.substr(end + 1).replaceAll(/<\/?i>/g,'');
+            element.innerHTML = str;
+        }
+        $('body').on('click', '.tree_node', function () {
+            if ($(this).attr('open') == 'open') {
+                states[this.id] = $(this).attr('open') == 'closed';
+            }
+            else {
+                states[this.id] = $(this).attr('open') == 'open';
+            }
+
+        });
+        function set_tree(content) {
+            $('.tree_node').each(function(){
+                states[this.id] = $(this).attr('open') == 'open';
+            })
+            $('#tree').html(content+"<br><span class='tree-value'>click the arrows to expand the parse tree</span>"+
+            "<br><span class='tree-value'>right click to add a breakpoint</span>");
+            for (var i in states) {
+                if (states[i]) {
+                    $(`#${i}`).attr('open', 'open');
+                }
+            }
+            $('.token').each(function () {
+                if (breakpoints.includes(this.id.replace('token_', ''))) {
+                    $(this).html('🔴' + this.innerHTML);
+                }
+            })
+            $("#code").html(code[$("select").val()])
+        }
+        $('body').on('contextmenu', '.token', function(e){
+          if (breakpoints.includes(this.id.replace('token_',''))) {
+              $(this).html(this.innerHTML.replace('🔴',''));
+              breakpoints.remove(this.id.replace('token_',''))
+              eel.remove_breakpoint(this.id.replace('token_',''))
+          }
+          else {
+              $(this).html('🔴' + this.innerHTML);
+              breakpoints.push(this.id.replace('token_',''))
+              eel.add_breakpoint(this.id.replace('token_',''))
+          }
+          return false
+        });
+        function exit() {
+            if (confirm('The process has stopped. Would you like to close the debugger?')) {
+                window.close();
+            }
+        }
+        $("select").change(function(){
+            $("#code").html(code[this.value])
+        });
+        $("body").on('mouseenter', '.token', function() {
+            let pos = $(this).attr('data-position') - 1;
+            let endpos = $(this).attr('data-end') - 1;
+            if (pos < 0) {
+                return;
+            }
+            if (endpos <= 0) {
+                endpos = pos;
+            }
+            highlight(document.getElementById('code'), pos, endpos);
+        });
+        $("body").on('mouseleave', '.token', function() {
+           $("#code").html(code[$("select").val()])
+        });
+        function set_code(normal, pretty) {
+            code.pretty = pretty
+            code.normal = normal
+            $("#code").html(code.normal)
+        }
+        function set_current(id) {
+            $(".token").removeClass('current')
+            $("#token_"+id).addClass('current')
+            let pos = $("#token_"+id).attr('data-position') - 1;
+            let endpos = $("#token_"+id).attr('data-end') - 1;
+            highlight(document.getElementById('code'),
+                pos, endpos,
+                background='blue')
+        }
+        function expandAll() {
+            $('.tree_node').each(function(){
+                $(this).attr('open', 'open')
+                states[this.id] = true;
+            })
+        }
+        function collapseAll() {
+            $('.tree_node').each(function(){
+                $(this).attr('open', 'closed')
+                states[this.id] = false;
+            })
+        }
+        eel.expose(set_tree);
+        eel.expose(set_code);
+        eel.expose(exit);
+        eel.expose(set_current);
+    </script>
+</body>
+</html>

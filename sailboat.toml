@@ -1,0 +1,45 @@
+#            _  _  _                _   
+#  ___ __ _ (_)| || |__  ___  __ _ | |_ 
+# (_-</ _` || || || '_ \/ _ \/ _` ||  _|
+# /__/\__,_||_||_||_.__/\___/\__,_| \__|
+                                      
+# Basic Setup:
+name = "Adicity"
+short_name = "adicity"
+email = "cole@colewilson.xyz"
+author = "Cole Wilson"
+short_description = "A fixed-arity high level functional programming language engine."
+description = "A fixed-arity high level functional programming language engine."
+url = "https://github.com/cole-wilson/adicity"
+keywords = ""
+license = "none"
+latest_build = "0.0.6+fecb97e.1"
+
+
+# Resource Setup:
+[resources]
+icns = ""
+data_files = [ "*.p", "*.txt",]
+modules = [ "main", "arrays", "debugger", "colorama", "eel", "typing", "parse", "errors", "datetime", "logging",]
+file = "main.py"
+no_import = [ "threading", "operations", "re", "inspect", "os",]
+
+
+# Plugin Commands:
+
+
+# Build Routines:
+[build.pypi.commands]
+adicity = "adicity.main"
+
+[build.pypi.entry_points]
+
+
+# Release Routines:
+
+
+# Other:
+[git]
+
+
+# Thank you for using Sailboat!
