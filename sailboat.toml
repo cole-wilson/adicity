@@ -53,6 +53,7 @@ adicity = "adicity.main"
 
 # Other:
 [git]
+github = "cole-wilson/adicity"
 
 
 # Thank you for using Sailboat!
