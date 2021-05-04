@@ -2,8 +2,8 @@ import sys
 import adicity
 import os
 
-def main():
-	args = sys.argv[1:]
+def main(argv=False):
+	args = argv or sys.argv[1:]
 	try:
 		name = args[0]
 	except IndexError:

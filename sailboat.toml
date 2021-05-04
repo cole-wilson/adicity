@@ -13,22 +13,35 @@ description = "A fixed-arity high level functional programming language engine."
 url = "https://github.com/cole-wilson/adicity"
 keywords = ""
 license = "none"
-latest_build = "0.0.6+fecb97e.1"
+latest_build = "0.6.4"
+release-notes = "A"
+latest_release = "0.6.3"
 
 
 # Resource Setup:
 [resources]
 icns = ""
 data_files = [ "*.p", "*.txt",]
-modules = [ "main", "arrays", "debugger", "colorama", "eel", "typing", "parse", "errors", "datetime", "logging",]
+modules = [ "colorama",]
 file = "main.py"
-no_import = [ "threading", "operations", "re", "inspect", "os",]
+no_import = [ "datetime", "inspect", "re", "os", "threading", "logging",]
 
 
 # Plugin Commands:
+[command.tasks]
 
 
 # Build Routines:
+[build.pyinstaller]
+_run = false
+type = 1
+mac = true
+windows = true
+unix = true
+bundle_id = "com.colewilson.adicity"
+
+[build.actions]
+
 [build.pypi.commands]
 adicity = "adicity.main"
 

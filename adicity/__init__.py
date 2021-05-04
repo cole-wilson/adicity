@@ -12,8 +12,8 @@ from adicity import errors, debugger
 
 
 colorama.init()
-LOG_LEVEL = logging.FATAL
-logging.basicConfig(encoding='utf-8', level=LOG_LEVEL)
+# LOG_LEVEL = logging.FATAL
+# logging.basicConfig(encoding='utf-8', level=LOG_LEVEL)
 node_template: str = """
 {sep}<details {state} class='tree_node' id='node_{eyedee}'>
 {sep}	<summary class='token' id='token_{eyedee}' data-position='{pos}' data-end='{end}' title='{description}'>

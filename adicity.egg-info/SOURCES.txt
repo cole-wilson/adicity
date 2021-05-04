@@ -1,0 +1,11 @@
+setup.py
+adicity/__init__.py
+adicity/__main__.py
+adicity/debugger.py
+adicity/errors.py
+adicity.egg-info/PKG-INFO
+adicity.egg-info/SOURCES.txt
+adicity.egg-info/dependency_links.txt
+adicity.egg-info/entry_points.txt
+adicity.egg-info/requires.txt
+adicity.egg-info/top_level.txt
